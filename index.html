@@ -9,11 +9,11 @@
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&display=swap');
         
         :root {
-            --position-circle-opacity: 0.1;
-            --tessellation-opacity: 0.1;
-            --connection-opacity: 0.3;
-            --big-circle-opacity: 0.2;
-            --position-enhanced-opacity: 0.2;
+            --position-circle-opacity: 0.8;
+            --tessellation-opacity: 0.7;
+            --connection-opacity: 0.7;
+            --big-circle-opacity: 0.7;
+            --position-enhanced-opacity: 0.7;
         }
         
         * {
@@ -183,17 +183,17 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            opacity: 0.3;
+            opacity: 0.6;
             z-index: 1;
         }
         
         .tessellation-layer {
             z-index: 2;
-            opacity: 0.8;
+            opacity: 0.5;
         }
         
         .connection-line {
-            stroke: rgba(255, 255, 255, 0.15);
+            stroke: rgba(255, 255, 255, 0.5);
             stroke-width: 0.8;
             fill: none;
             opacity: 0;
@@ -202,21 +202,21 @@
         }
         
         .connection-line.close {
-            stroke: rgba(255, 255, 255, 0.3);
+            stroke: rgba(255, 255, 255, 0.5);
             stroke-width: 1.5;
             stroke-dasharray: 6 4;
             animation: fadeInLine 2s ease-out forwards, connectionPulse 12s ease-in-out infinite;
         }
         
         .connection-line.very-close {
-            stroke: rgba(255, 255, 255, 0.5);
+            stroke: rgba(255, 255, 255, 0.8);
             stroke-width: 2;
             stroke-dasharray: 8 3;
             animation: fadeInLine 2s ease-out forwards, connectionWave 18s ease-in-out infinite;
         }
         
         .line-circle {
-            fill: rgba(255, 255, 255, 0.8);
+            fill: rgba(255, 255, 255, 1.0);
             stroke: rgba(255, 255, 255, 1);
             stroke-width: 0.3;
             opacity: 0;
@@ -235,7 +235,7 @@
         
         .big-outline-circle {
             fill: none;
-            stroke: rgba(255, 255, 255, 0.3);
+            stroke: rgba(255, 255, 255, 0.8);
             stroke-width: 1.5;
             opacity: 0;
             animation: fadeInBigCircle 4s ease-out forwards, bigCircleRotate 30s linear infinite;
@@ -247,14 +247,14 @@
         
         .tessellation-circle {
             fill: none;
-            stroke: rgba(255, 255, 255, 0.2);
+            stroke: rgba(255, 255, 255, 0.8);
             stroke-width: 1;
             opacity: 0;
             animation: fadeInTessellation 3s ease-out forwards, tessellationBreathe 25s ease-in-out infinite;
         }
         
         .tessellation-intersection {
-            fill: rgba(255, 255, 255, 0.05);
+            fill: rgba(255, 255, 255, 0.6);
             stroke: rgba(255, 255, 255, 0.15);
             stroke-width: 0.8;
             opacity: 0;
