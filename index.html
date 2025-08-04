@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Positionality Garden</title>
+    <title>Positionality Garden v33</title>
+    <meta name="description" content="An interactive exploration of perspectives on artificial intelligence—human and more-than-human, present and emergent. Features full drag-and-drop positioning.">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&display=swap');
         
@@ -252,14 +253,6 @@
             animation: fadeInTessellation 3.5s ease-out forwards, tessellationPulse 20s ease-in-out infinite;
         }
         
-        .voronoi-cell {
-            fill: rgba(255, 255, 255, 0.05);
-            stroke: rgba(255, 255, 255, 0.2);
-            stroke-width: 0.6;
-            opacity: 0;
-            animation: fadeInTessellation 4s ease-out forwards, tessellationFloat 10s ease-in-out infinite;
-        }
-        
         .axis-label {
             position: absolute;
             font-size: 0.75rem;
@@ -306,11 +299,25 @@
             align-items: center;
             justify-content: center;
             text-align: center;
-            cursor: pointer;
+            cursor: grab;
+            user-select: none;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
             transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
             transform: translate(-50%, -50%);
             opacity: 0;
             z-index: 10;
+        }
+        
+        .position:active {
+            cursor: grabbing;
+        }
+        
+        .position.dragging {
+            transform: translate(-50%, -50%) scale(1.1) !important;
+            z-index: 100 !important;
+            transition: none !important;
         }
         
         .position-label {
@@ -335,20 +342,25 @@
         }
         
         .position.selected .position-label {
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
+            color: #ffffff;
+            font-weight: 700;
             background: rgba(0, 0, 0, 0.4);
             backdrop-filter: blur(4px);
+            padding: 3px 8px;
+            border-radius: 6px;
         }
         
-        .position svg {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
+        .position.selected .position-outline-main {
+            stroke: rgba(255, 255, 255, 0.8) !important;
+            stroke-width: 2.5 !important;
         }
         
-        /* Position markers - subtle tessellation for AI Positions mode */
+        .position.selected .position-outline-inner {
+            fill: rgba(255, 255, 255, 0.15) !important;
+            stroke: rgba(255, 255, 255, 0.5) !important;
+        }
+        
         .position-markers {
             position: absolute;
             top: 0;
@@ -371,7 +383,6 @@
             animation: positionInnerPulse 10s ease-in-out infinite;
         }
         
-        /* Enhanced markers when labels are hidden - DRAMATIC 60% opacity increase */
         .position.labels-hidden .position-outline-main {
             stroke: rgba(255, 255, 255, 0.7) !important;
             stroke-width: 2 !important;
@@ -411,8 +422,8 @@
         }
         
         .position:hover .position-outline-main {
-            stroke: rgba(255, 255, 255, 0.4) !important;
-            stroke-width: 1.5 !important;
+            stroke: rgba(255, 255, 255, 0.6) !important;
+            stroke-width: 2 !important;
         }
         
         .position.selected {
@@ -420,26 +431,6 @@
             z-index: 20;
         }
         
-        .position.selected .position-label {
-            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
-            color: #ffffff;
-            font-weight: 700;
-            background: rgba(0, 0, 0, 0.3);
-            padding: 3px 8px;
-            border-radius: 6px;
-        }
-        
-        .position.selected .position-outline-main {
-            stroke: rgba(255, 255, 255, 0.6) !important;
-            stroke-width: 2 !important;
-        }
-        
-        .position.selected .position-outline-inner {
-            fill: rgba(255, 255, 255, 0.1) !important;
-            stroke: rgba(255, 255, 255, 0.3) !important;
-        }
-        
-        /* Circle variations by type - simplified sizing only */
         .position.human {
             width: 70px;
             height: 70px;
@@ -458,6 +449,27 @@
         .position.temporal {
             width: 66px;
             height: 72px;
+        }
+        
+        .position.dragging .position-label {
+            text-shadow: 0 4px 12px rgba(0, 0, 0, 0.9);
+            font-weight: 700;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 4px 8px;
+            border-radius: 6px;
+            backdrop-filter: blur(8px);
+        }
+        
+        .position.dragging .position-outline-main {
+            stroke: rgba(255, 255, 255, 0.9) !important;
+            stroke-width: 3 !important;
+            animation: dragPulse 1s ease-in-out infinite !important;
+        }
+        
+        .position.dragging .position-outline-inner {
+            fill: rgba(255, 255, 255, 0.25) !important;
+            stroke: rgba(255, 255, 255, 0.7) !important;
+            animation: dragGlow 1s ease-in-out infinite !important;
         }
         
         .info-panel {
@@ -541,19 +553,9 @@
             100% { opacity: 0.3; }
         }
         
-        @keyframes fadeInArea {
-            0% { opacity: 0; }
-            100% { opacity: 0.6; }
-        }
-        
         @keyframes fadeInTessellation {
             0% { opacity: 0; }
             100% { opacity: 0.8; }
-        }
-        
-        @keyframes fadeInLine {
-            0% { opacity: 0; }
-            100% { opacity: 0.3; }
         }
         
         @keyframes fadeInCircle {
@@ -624,11 +626,6 @@
             }
         }
         
-        @keyframes fadeInCircle {
-            0% { opacity: 0; }
-            100% { opacity: 1; }
-        }
-        
         @keyframes fadeInBigCircle {
             0% { opacity: 0; }
             100% { opacity: 0.7; }
@@ -693,9 +690,6 @@
             }
         }
         
-        /* Simplified position sizing and enhanced hover/selection states */
-        
-        /* Position marker animations - darkened base states */
         @keyframes positionOutlineBreathe {
             0%, 100% { 
                 stroke-width: 1.2;
@@ -740,7 +734,6 @@
             }
         }
         
-        /* DRAMATICALLY enhanced animations when labels hidden */
         @keyframes positionOutlineBreatheEnhanced {
             0%, 100% { 
                 stroke-width: 2;
@@ -785,6 +778,26 @@
             }
         }
         
+        @keyframes dragPulse {
+            0%, 100% { 
+                opacity: 0.9;
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 1;
+                transform: scale(1.02);
+            }
+        }
+        
+        @keyframes dragGlow {
+            0%, 100% { 
+                opacity: 0.25;
+            }
+            50% { 
+                opacity: 0.4;
+            }
+        }
+        
         @media (max-width: 768px) {
             .container {
                 padding: 40px 24px;
@@ -808,8 +821,8 @@
 <body>
     <div class="container">
         <header>
-            <h1>Positionality Garden</h1>
-            <p class="subtitle">An interactive exploration of perspectives on artificial intelligence—human and more-than-human, present and emergent</p>
+            <h1>Positionality Garden v33</h1>
+            <p class="subtitle">An interactive exploration of perspectives on artificial intelligence—human and more-than-human, present and emergent. Now with full drag-and-drop positioning!</p>
         </header>
         
         <div class="garden-space">
@@ -828,16 +841,9 @@
             </div>
             
             <div class="visualization-area" id="garden">
-        <svg class="connection-lines" id="connectionLines" viewBox="0 0 1000 600">
-                    <!-- Lines will be dynamically generated -->
-                </svg>
+                <svg class="connection-lines" id="connectionLines" viewBox="0 0 1000 600"></svg>
+                <svg class="tessellation-layer" id="tessellationLayer" viewBox="0 0 1000 600"></svg>
                 
-                <!-- Tessellation layer -->
-                <svg class="tessellation-layer" id="tessellationLayer" viewBox="0 0 1000 600">
-                    <!-- Tessellation will be dynamically generated -->
-                </svg>
-                
-                <!-- Background patterns -->
                 <svg class="background-pattern active" id="pattern-grid" viewBox="0 0 1000 600">
                     <defs>
                         <pattern id="grid" width="80" height="80" patternUnits="userSpaceOnUse">
@@ -896,7 +902,7 @@
             <h3 id="selectedName">Select a position to explore</h3>
             <div id="defaultInfo">
                 <p style="color: #a0aec0; font-style: italic;">
-                    Click on any breathing circle to discover its unique perspective, concerns, and ways of processing the world.
+                    Click on any position to discover its unique perspective, concerns, and ways of processing the world. Drag items to reposition them in the space!
                 </p>
             </div>
             
@@ -926,7 +932,6 @@
     </div>
 
     <script>
-        // AI Metaphor definitions with triangle variations
         const aiMetaphors = [
             {
                 name: "AI as Monster",
@@ -1117,7 +1122,6 @@
             }
         ];
 
-        // Position definitions with circle variations
         const positions = [
             {
                 name: "Tech Accelerationist",
@@ -1257,7 +1261,6 @@
             }
         ];
 
-        // Background patterns for different axes
         const backgroundPatterns = {
             "innovation-safety": "pattern-grid",
             "market-government": "pattern-dots", 
@@ -1270,43 +1273,45 @@
         let currentDimensions = 1;
         let selectedPosition = null;
         let positionElements = [];
-        let currentMode = 'positions'; // 'positions' or 'metaphors'
+        let currentMode = 'positions';
         let currentDataSet = positions;
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartY = 0;
+        let dragElement = null;
+        let dragPosition = null;
+        let dragThreshold = 5;
+        let hasExceededThreshold = false;
 
         function initializeGarden() {
             renderPositions();
             setupEventListeners();
+            document.addEventListener('mousemove', handleDragMove);
+            document.addEventListener('mouseup', handleDragEnd);
+            document.addEventListener('touchmove', handleDragMove, { passive: false });
+            document.addEventListener('touchend', handleDragEnd);
             setTimeout(() => {
                 renderConnectionLines();
                 renderTessellation();
-            }, 1000); // Delay to let positions animate in first
+            }, 1000);
         }
 
         function renderPositions() {
             const garden = document.getElementById('garden');
-            
-            // Clear existing positions
             const existingPositions = garden.querySelectorAll('.position');
             existingPositions.forEach(p => p.remove());
             positionElements = [];
             
-            console.log('Rendering positions in mode:', currentMode, 'with', currentDataSet.length, 'items');
-            
             currentDataSet.forEach((position, index) => {
-                console.log('Creating position:', position.name, 'type:', position.type);
                 const element = createPositionElement(position, index);
                 garden.appendChild(element);
                 positionElements.push(element);
-                
-                // Animate in with delay
                 setTimeout(() => {
                     element.style.opacity = '1';
                     positionElement(element, position);
-                    console.log('Positioned element at:', element.style.left, element.style.top);
                 }, index * 150);
             });
             
-            // Update background patterns after rendering
             setTimeout(() => {
                 updateBackgroundPattern();
             }, 100);
@@ -1316,33 +1321,26 @@
             const element = document.createElement('div');
             element.className = `position ${position.type || 'default'}`;
             
-            // Add metaphor-mode class if in metaphor mode
             if (currentMode === 'metaphors') {
                 element.classList.add('metaphor-mode');
-                console.log('Added metaphor-mode class to:', position.name);
             }
             
-            // Create label element
             const label = document.createElement('div');
             label.className = 'position-label';
             label.textContent = position.name || 'Unknown';
             element.appendChild(label);
             
-            // Add subtle visual markers for AI Positions mode
             if (currentMode === 'positions') {
-                // Create SVG for subtle tessellation and markers
                 const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
                 svg.setAttribute('viewBox', '0 0 100 100');
                 svg.setAttribute('width', '100%');
                 svg.setAttribute('height', '100%');
                 svg.setAttribute('class', 'position-markers');
                 
-                // Organic variation for each position
                 const baseRadius = 25 + (index % 6) - 3;
                 const offsetX = 50 + ((index * 7) % 4) - 2;
                 const offsetY = 50 + ((index * 11) % 4) - 2;
                 
-                // Main faint circle outline - darker
                 const mainOutline = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                 mainOutline.setAttribute('cx', offsetX);
                 mainOutline.setAttribute('cy', offsetY);
@@ -1353,7 +1351,6 @@
                 mainOutline.setAttribute('opacity', '1');
                 mainOutline.setAttribute('class', 'position-outline-main');
                 
-                // Secondary tessellation circle - darker
                 const tessCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                 tessCircle.setAttribute('cx', offsetX + 3);
                 tessCircle.setAttribute('cy', offsetY - 2);
@@ -1365,7 +1362,6 @@
                 tessCircle.setAttribute('opacity', '1');
                 tessCircle.setAttribute('class', 'position-outline-tess');
                 
-                // Inner detail circle - darker
                 const innerCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                 innerCircle.setAttribute('cx', offsetX - 1);
                 innerCircle.setAttribute('cy', offsetY + 1);
@@ -1379,74 +1375,139 @@
                 svg.appendChild(tessCircle);
                 svg.appendChild(mainOutline);
                 svg.appendChild(innerCircle);
-                
                 element.appendChild(svg);
-                
-                console.log('Created position markers for:', position.name);
-            } else {
-                console.log('Created label-only metaphor for:', position.name);
             }
             
-            element.addEventListener('click', () => selectPosition(position, element));
-            
+            setupDragHandlers(element, position, index);
             return element;
         }
 
-        function getCirclePaths(type, index) {
-            // Organic variations for imperfect circles
-            const seedA = (index * 7 + 3) % 13;
-            const seedB = (index * 11 + 7) % 17;
-            const seedC = (index * 5 + 2) % 19;
+        function setupDragHandlers(element, position, index) {
+            element.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                startDrag(e, element, position, index);
+            });
             
-            // Base circle parameters with organic variation
-            const baseCx = 50 + (seedA % 6) - 3;
-            const baseCy = 50 + (seedB % 6) - 3;
-            const baseRx = 35 + (seedC % 8) - 4;
-            const baseRy = 35 + (seedA % 8) - 4;
+            element.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const touch = e.touches[0];
+                startDrag(touch, element, position, index);
+            }, { passive: false });
             
-            // Much more askew outline circle
-            const askew1 = {
-                cx: baseCx + (seedB % 12) - 6,
-                cy: baseCy + (seedC % 12) - 6,
-                rx: baseRx + (seedA % 10) - 5,
-                ry: baseRy + (seedB % 10) - 5
-            };
+            function startDrag(event, elem, pos, idx) {
+                isDragging = true;
+                hasExceededThreshold = false;
+                dragStartX = event.clientX;
+                dragStartY = event.clientY;
+                dragElement = elem;
+                dragPosition = pos;
+                elem.style.cursor = 'grabbing';
+                elem.style.zIndex = '100';
+                elem.classList.add('dragging');
+            }
+        }
+        
+        function handleDragMove(e) {
+            if (!isDragging || !dragElement || !dragPosition) return;
             
-            return {
-                main: {
-                    cx: baseCx,
-                    cy: baseCy,
-                    rx: baseRx,
-                    ry: baseRy
-                },
-                outline1: askew1
-            };
+            e.preventDefault();
+            const event = e.touches ? e.touches[0] : e;
+            const deltaX = event.clientX - dragStartX;
+            const deltaY = event.clientY - dragStartY;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            
+            if (!hasExceededThreshold && distance > dragThreshold) {
+                hasExceededThreshold = true;
+            }
+            
+            if (hasExceededThreshold) {
+                const garden = document.getElementById('garden');
+                const rect = garden.getBoundingClientRect();
+                const relativeX = Math.max(0, Math.min(1, (event.clientX - rect.left) / rect.width));
+                const relativeY = Math.max(0, Math.min(1, (event.clientY - rect.top) / rect.height));
+                
+                updatePositionCoordinates(dragPosition, relativeX, relativeY);
+                positionElement(dragElement, dragPosition);
+                
+                if (!dragElement.updateTimeout) {
+                    dragElement.updateTimeout = setTimeout(() => {
+                        renderConnectionLines();
+                        renderTessellation();
+                        dragElement.updateTimeout = null;
+                    }, 50);
+                }
+            }
+        }
+        
+        function handleDragEnd(e) {
+            if (!isDragging) return;
+            
+            const wasActualDrag = hasExceededThreshold;
+            
+            if (dragElement) {
+                if (dragElement.updateTimeout) {
+                    clearTimeout(dragElement.updateTimeout);
+                    dragElement.updateTimeout = null;
+                }
+                
+                dragElement.style.cursor = '';
+                dragElement.style.zIndex = '';
+                dragElement.classList.remove('dragging');
+                
+                if (!wasActualDrag) {
+                    selectPosition(dragPosition, dragElement);
+                } else {
+                    setTimeout(() => {
+                        renderConnectionLines();
+                        renderTessellation();
+                    }, 100);
+                }
+            }
+            
+            isDragging = false;
+            hasExceededThreshold = false;
+            dragStartX = 0;
+            dragStartY = 0;
+            dragElement = null;
+            dragPosition = null;
+        }
+        
+        function updatePositionCoordinates(position, relativeX, relativeY) {
+            const activeAxes = getActiveAxes();
+            
+            if (currentDimensions === 1 && activeAxes[0]) {
+                const axisValue = (relativeX - 0.15) / 0.7 * 100;
+                const clampedValue = Math.max(0, Math.min(100, axisValue));
+                position.coordinates[activeAxes[0]] = clampedValue;
+            } else if (currentDimensions === 2 && activeAxes.length >= 2) {
+                const xAxisValue = (relativeX - 0.15) / 0.7 * 100;
+                const clampedX = Math.max(0, Math.min(100, xAxisValue));
+                position.coordinates[activeAxes[0]] = clampedX;
+                
+                const yAxisValue = (1 - ((relativeY - 0.1) / 0.8)) * 100;
+                const clampedY = Math.max(0, Math.min(100, yAxisValue));
+                position.coordinates[activeAxes[1]] = clampedY;
+            }
         }
 
         function renderConnectionLines() {
             const linesSvg = document.getElementById('connectionLines');
-            linesSvg.innerHTML = ''; // Clear existing lines
+            linesSvg.innerHTML = '';
             
-            // Create lines between all positions and calculate distances
             for (let i = 0; i < currentDataSet.length; i++) {
                 for (let j = i + 1; j < currentDataSet.length; j++) {
                     const pos1 = getPositionCoordinates(currentDataSet[i]);
                     const pos2 = getPositionCoordinates(currentDataSet[j]);
-                    
-                    // Calculate distance between positions
                     const distance = Math.sqrt(Math.pow(pos1.x - pos2.x, 2) + Math.pow(pos1.y - pos2.y, 2));
                     
                     const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-                    // Scale coordinates to viewBox (1000x600)
                     line.setAttribute('x1', pos1.x * 10);
                     line.setAttribute('y1', pos1.y * 6);
                     line.setAttribute('x2', pos2.x * 10);
                     line.setAttribute('y2', pos2.y * 6);
                     
-                    // Apply different styles and animations based on distance
                     const baseDelay = (i + j) * 0.1;
                     const connectionDelay = baseDelay + 2;
-                    
                     let lineClass = 'connection-line';
                     let circleClass = 'line-circle';
                     let flowDuration = 25;
@@ -1469,21 +1530,18 @@
                     line.style.animationDelay = `${baseDelay}s, ${connectionDelay}s`;
                     linesSvg.appendChild(line);
                     
-                    // Create path for flowing dots
                     const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
                     path.setAttribute('d', `M ${pos1.x * 10} ${pos1.y * 6} L ${pos2.x * 10} ${pos2.y * 6}`);
                     path.setAttribute('id', `path-${i}-${j}`);
-                    path.style.display = 'none'; // Hide the path itself
+                    path.style.display = 'none';
                     linesSvg.appendChild(path);
                     
-                    // Add flowing dots
                     const numDots = Math.floor(distance / 20) + 2;
                     for (let k = 0; k < numDots; k++) {
                         const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                         circle.setAttribute('r', distance < 20 ? 1.8 : distance < 35 ? 1.4 : 1.2);
                         circle.setAttribute('class', circleClass);
                         
-                        // Create animation for flowing along the path
                         const animateMotion = document.createElementNS('http://www.w3.org/2000/svg', 'animateMotion');
                         animateMotion.setAttribute('dur', `${flowDuration + (k * 2)}s`);
                         animateMotion.setAttribute('repeatCount', 'indefinite');
@@ -1504,10 +1562,9 @@
                 }
             }
             
-            // Add big outlined circles at strategic positions
             const positionCoords = getAllPositionCoordinates();
             positionCoords.forEach((pos, index) => {
-                if (index % 2 === 0) { // Add big circles for every other position
+                if (index % 2 === 0) {
                     const bigCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                     bigCircle.setAttribute('cx', pos.x * 10);
                     bigCircle.setAttribute('cy', pos.y * 6);
@@ -1522,23 +1579,21 @@
         
         function renderTessellation() {
             const tessellationSvg = document.getElementById('tessellationLayer');
-            tessellationSvg.innerHTML = ''; // Clear existing tessellation
+            tessellationSvg.innerHTML = '';
             
             const positionCoords = getAllPositionCoordinates();
             
-            // Create subtle overlapping circles around each position
             positionCoords.forEach((pos, index) => {
                 const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                 circle.setAttribute('cx', pos.x * 10);
                 circle.setAttribute('cy', pos.y * 6);
-                circle.setAttribute('r', 60 + (index % 15 - 7)); // Vary radius slightly
+                circle.setAttribute('r', 60 + (index % 15 - 7));
                 circle.setAttribute('class', 'tessellation-circle');
-                circle.style.animationDelay = `${index * 0.2}s, ${index * 0.8}s`; // Slower, staggered delays
-                circle.style.animationDuration = `3s, ${25 + (index % 8)}s`; // Much slower breathing
+                circle.style.animationDelay = `${index * 0.2}s, ${index * 0.8}s`;
+                circle.style.animationDuration = `3s, ${25 + (index % 8)}s`;
                 tessellationSvg.appendChild(circle);
             });
             
-            // Create subtle intersection areas
             for (let i = 0; i < positionCoords.length; i++) {
                 for (let j = i + 1; j < positionCoords.length; j++) {
                     const pos1 = positionCoords[i];
@@ -1556,97 +1611,13 @@
                         ellipse.setAttribute('ry', 15 + (j % 6 - 3));
                         ellipse.setAttribute('class', 'tessellation-intersection');
                         const pulseDelay = (i + j) * 0.15;
-                        const pulseDuration = 20 + (i + j) % 6; // Much slower
+                        const pulseDuration = 20 + (i + j) % 6;
                         ellipse.style.animationDelay = `${pulseDelay}s, ${pulseDelay + 2}s`;
                         ellipse.style.animationDuration = `3.5s, ${pulseDuration}s`;
                         tessellationSvg.appendChild(ellipse);
                     }
                 }
             }
-        }
-        
-        function getTrianglePaths(type, index) {
-            // Organic variations for imperfect triangles
-            const seedA = (index * 7 + 3) % 13;
-            const seedB = (index * 11 + 7) % 17;
-            const seedC = (index * 5 + 2) % 19;
-            
-            // Base triangle with organic variation
-            let mainPath = `M50,20 L75,75 L25,75 Z`;
-            
-            // Askew outline triangle
-            const offsetX = 4 + (seedB % 6);
-            const offsetY = 3 + (seedC % 4);
-            let outlinePath = `M${46 + offsetX},${23 + offsetY} L${79 + offsetX},${78 + offsetY} L${21 + offsetX},${78 + offsetY} Z`;
-            
-            // Create different triangle shapes based on metaphor type
-            switch(type) {
-                case 'destructive':
-                    // Sharp, aggressive triangles (AI as Monster)
-                    mainPath = `M50,10 L80,80 L20,80 Z`;
-                    outlinePath = `M${46 + offsetX},${14 + offsetY} L${84 + offsetX},${84 + offsetY} L${16 + offsetX},${84 + offsetY} Z`;
-                    break;
-                case 'foreign':
-                    // Irregular, alien shapes (AI as Alien)
-                    mainPath = `M50,15 L78,70 L22,85 Z`;
-                    outlinePath = `M${46 + offsetX},${19 + offsetY} L${82 + offsetX},${74 + offsetY} L${18 + offsetX},${89 + offsetY} Z`;
-                    break;
-                case 'progressive':
-                    // Ascending, evolutionary triangles (AI as Evolution)
-                    mainPath = `M50,12 L75,75 L25,75 Z`;
-                    outlinePath = `M${46 + offsetX},${16 + offsetY} L${79 + offsetX},${79 + offsetY} L${21 + offsetX},${79 + offsetY} Z`;
-                    break;
-                case 'reflective':
-                    // Symmetric, mirrored triangles (AI as Mirror)
-                    mainPath = `M50,20 L70,75 L30,75 Z`;
-                    outlinePath = `M${46 + offsetX},${24 + offsetY} L${74 + offsetX},${79 + offsetY} L${26 + offsetX},${79 + offsetY} Z`;
-                    break;
-                case 'transitional':
-                    // Doorway-like, tall triangles (AI as Doorway)
-                    mainPath = `M50,5 L65,85 L35,85 Z`;
-                    outlinePath = `M${46 + offsetX},${9 + offsetY} L${69 + offsetX},${89 + offsetY} L${31 + offsetX},${89 + offsetY} Z`;
-                    break;
-                case 'instrumental':
-                    // Tool-like, mechanical triangles (AI as Tool)
-                    mainPath = `M50,25 L75,75 L25,75 Z`;
-                    outlinePath = `M${46 + offsetX},${29 + offsetY} L${79 + offsetX},${79 + offsetY} L${21 + offsetX},${79 + offsetY} Z`;
-                    break;
-                case 'prophetic':
-                    // Mystical, upward-pointing triangles (AI as Oracle)
-                    mainPath = `M50,8 L72,80 L28,80 Z`;
-                    outlinePath = `M${46 + offsetX},${12 + offsetY} L${76 + offsetX},${84 + offsetY} L${24 + offsetX},${84 + offsetY} Z`;
-                    break;
-                case 'developmental':
-                    // Smaller, child-like triangles (AI as Child)
-                    mainPath = `M50,30 L70,70 L30,70 Z`;
-                    outlinePath = `M${46 + offsetX},${34 + offsetY} L${74 + offsetX},${74 + offsetY} L${26 + offsetX},${74 + offsetY} Z`;
-                    break;
-                case 'extractive':
-                    // Sharp, parasitic triangles (AI as Parasite)
-                    mainPath = `M50,12 L78,78 L22,82 Z`;
-                    outlinePath = `M${46 + offsetX},${16 + offsetY} L${82 + offsetX},${82 + offsetY} L${18 + offsetX},${86 + offsetY} Z`;
-                    break;
-                case 'divine':
-                    // Large, imposing triangles (AI as God)
-                    mainPath = `M50,5 L82,85 L18,85 Z`;
-                    outlinePath = `M${46 + offsetX},${9 + offsetY} L${86 + offsetX},${89 + offsetY} L${14 + offsetX},${89 + offsetY} Z`;
-                    break;
-                case 'collaborative':
-                    // Balanced, partnership triangles (AI as Partner)
-                    mainPath = `M50,22 L72,75 L28,75 Z`;
-                    outlinePath = `M${46 + offsetX},${26 + offsetY} L${76 + offsetX},${79 + offsetY} L${24 + offsetX},${79 + offsetY} Z`;
-                    break;
-                default:
-                    // Default triangle
-                    mainPath = `M50,20 L75,75 L25,75 Z`;
-                    outlinePath = `M${46 + offsetX},${24 + offsetY} L${79 + offsetX},${79 + offsetY} L${21 + offsetX},${79 + offsetY} Z`;
-                    break;
-            }
-            
-            return {
-                main: mainPath,
-                outline1: outlinePath
-            };
         }
 
         function getAllPositionCoordinates() {
@@ -1656,7 +1627,6 @@
                 }
                 return currentDataSet.map(position => getPositionCoordinates(position));
             } catch (error) {
-                console.warn('Error getting all position coordinates:', error);
                 return [];
             }
         }
@@ -1664,7 +1634,7 @@
         function getPositionCoordinates(position) {
             try {
                 if (!position || !position.coordinates) {
-                    return { x: 50, y: 50 }; // Default center position
+                    return { x: 50, y: 50 };
                 }
                 
                 if (currentDimensions === 1) {
@@ -1672,7 +1642,6 @@
                     if (!activeAxis || !position.coordinates[activeAxis]) {
                         return { x: 50, y: 50 };
                     }
-                    // Map 0-100 coordinate to 15-85% to avoid label overlap
                     const rawX = position.coordinates[activeAxis];
                     const x = 15 + (rawX / 100) * 70;
                     return { x: x, y: 50 };
@@ -1681,16 +1650,14 @@
                     if (!axes[0] || !axes[1] || !position.coordinates[axes[0]] || !position.coordinates[axes[1]]) {
                         return { x: 50, y: 50 };
                     }
-                    // Map coordinates to safe zones: 15-85% horizontal, 10-90% vertical
                     const rawX = position.coordinates[axes[0]];
                     const rawY = position.coordinates[axes[1]];
                     const x = 15 + (rawX / 100) * 70;
-                    const y = 90 - (rawY / 100) * 80; // Inverted Y and constrained
+                    const y = 90 - (rawY / 100) * 80;
                     return { x: x, y: y };
                 }
                 return { x: 50, y: 50 };
             } catch (error) {
-                console.warn('Error getting position coordinates:', error);
                 return { x: 50, y: 50 };
             }
         }
@@ -1698,7 +1665,6 @@
         function positionElement(element, position) {
             try {
                 if (!element || !position) return;
-                
                 const coords = getPositionCoordinates(position);
                 element.style.left = `${coords.x}%`;
                 element.style.top = `${coords.y}%`;
@@ -1712,10 +1678,9 @@
                 const activeButtons = document.querySelectorAll('.axis-selector.active');
                 return Array.from(activeButtons)
                     .map(btn => btn.dataset.axis)
-                    .filter(axis => axis); // Filter out undefined/null values
+                    .filter(axis => axis);
             } catch (error) {
-                console.warn('Error getting active axes:', error);
-                return ['innovation-safety']; // Default fallback
+                return ['innovation-safety'];
             }
         }
 
@@ -1723,20 +1688,17 @@
             const activeAxes = getActiveAxes();
             const patterns = document.querySelectorAll('.background-pattern');
             
-            // Hide all patterns first
             patterns.forEach(pattern => {
                 pattern.classList.remove('active');
                 pattern.style.opacity = '0';
             });
             
-            // Only show patterns for active axes
             if (activeAxes.length > 0) {
                 activeAxes.forEach((axis, index) => {
                     const patternId = backgroundPatterns[axis];
                     const pattern = document.getElementById(patternId);
                     if (pattern) {
                         pattern.classList.add('active');
-                        // Adjust opacity based on number of active patterns
                         if (activeAxes.length === 1) {
                             pattern.style.opacity = '1';
                         } else if (activeAxes.length === 2) {
@@ -1749,16 +1711,13 @@
 
         function selectPosition(position, element) {
             try {
-                // Remove previous selection
                 if (selectedPosition) {
                     selectedPosition.classList.remove('selected');
                 }
                 
-                // Add new selection
                 element.classList.add('selected');
                 selectedPosition = element;
                 
-                // Update info panel
                 const selectedName = document.getElementById('selectedName');
                 const defaultInfo = document.getElementById('defaultInfo');
                 const positionInfo = document.getElementById('positionInfo');
@@ -1771,7 +1730,6 @@
                     positionInfo.style.display = 'block';
                 }
                 
-                // Update info fields safely
                 const essence = document.getElementById('essence');
                 const metabolizes = document.getElementById('metabolizes');
                 const attracts = document.getElementById('attracts');
@@ -1825,45 +1783,37 @@
         
         function toggleMetaphorMode(button) {
             const currentModeState = button.dataset.mode;
-            console.log('Toggling mode from:', currentModeState, 'currentMode:', currentMode);
             
             if (currentModeState === 'positions') {
-                // Switch to metaphors
                 currentMode = 'metaphors';
                 currentDataSet = aiMetaphors;
                 button.textContent = 'AI Positions';
                 button.dataset.mode = 'metaphors';
-                console.log('Switched to metaphors mode, dataset length:', currentDataSet.length);
                 
-                // Update info panel text
                 const defaultInfo = document.getElementById('defaultInfo');
                 if (defaultInfo) {
                     defaultInfo.innerHTML = `
                         <p style="color: #a0aec0; font-style: italic;">
-                            Click on any breathing circle to discover how this metaphor shapes our understanding of AI.
+                            Click on any metaphor to discover how it shapes our understanding of AI. Drag to reposition!
                         </p>
                     `;
                 }
             } else {
-                // Switch to positions
                 currentMode = 'positions';
                 currentDataSet = positions;
                 button.textContent = 'AI Metaphors';
                 button.dataset.mode = 'positions';
-                console.log('Switched to positions mode, dataset length:', currentDataSet.length);
                 
-                // Update info panel text
                 const defaultInfo = document.getElementById('defaultInfo');
                 if (defaultInfo) {
                     defaultInfo.innerHTML = `
                         <p style="color: #a0aec0; font-style: italic;">
-                            Click on any breathing circle to discover its unique perspective, concerns, and ways of processing the world.
+                            Click on any position to discover its unique perspective, concerns, and ways of processing the world. Drag items to reposition them in the space!
                         </p>
                     `;
                 }
             }
             
-            // Clear current selection
             if (selectedPosition) {
                 selectedPosition.classList.remove('selected');
                 selectedPosition = null;
@@ -1879,8 +1829,6 @@
                 }
             }
             
-            // Re-render everything with a small delay to ensure proper cleanup
-            console.log('Re-rendering with mode:', currentMode);
             setTimeout(() => {
                 renderPositions();
                 setTimeout(() => {
@@ -1908,17 +1856,14 @@
         function updateVisualization() {
             const activeAxes = getActiveAxes();
             
-            // Update axis labels
             if (currentDimensions === 1) {
                 updateAxisLabels1D(activeAxes[0]);
             } else if (currentDimensions === 2) {
                 updateAxisLabels2D(activeAxes[0], activeAxes[1]);
             }
             
-            // Update background pattern
             updateBackgroundPattern();
             
-            // Re-position all elements - make sure we don't exceed array bounds
             const positionElements = document.querySelectorAll('.position');
             positionElements.forEach((element, index) => {
                 if (index < currentDataSet.length) {
@@ -1926,23 +1871,10 @@
                 }
             });
             
-            // Update connection lines and tessellation
             setTimeout(() => {
                 renderConnectionLines();
                 renderTessellation();
             }, 200);
-        }
-
-        function getAxisLabel(axis) {
-            const labels = {
-                "innovation-safety": "Innovation ↔ Safety",
-                "market-government": "Market ↔ Government", 
-                "tech-nature": "Tech ↔ Nature",
-                "temporal": "Short-term ↔ Long-term",
-                "harm-benefit": "Harm ↔ Benefit",
-                "utopia-dystopia": "Utopia ↔ Dystopia"
-            };
-            return labels[axis];
         }
 
         function updateAxisLabels1D(axis) {
@@ -2005,7 +1937,6 @@
             return endpoints[axis] || { left: "Unknown", right: "Unknown" };
         }
 
-        // Initialize when page loads
         document.addEventListener('DOMContentLoaded', initializeGarden);
     </script>
 </body>
